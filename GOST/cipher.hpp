@@ -21,7 +21,7 @@ namespace GOST {
         Cipher(key_t key, blocks_t blocks) : key(key), blocks(blocks) { genStageKeys(); };
         Cipher(key_t key) : key(key), blocks(genBlocks(time(NULL))) { genStageKeys(); };
         Cipher(blocks_t blocks) : key(genKey(time(NULL))), blocks(blocks) { genStageKeys(); };
-        Cipher(seed_t key_seed = 0, seed_t blocks_seed = 0) : key(genKey(key_seed)), blocks(genBlocks(blocks_seed)) { genStageKeys(); };
+        Cipher(seed_t key_seed, seed_t blocks_seed) : key(genKey(key_seed)), blocks(genBlocks(blocks_seed)) { genStageKeys(); };
         Cipher() : key(genKey(time(NULL))), blocks(genBlocks(time(NULL))) { genStageKeys(); };
 
         bytes_t EncryptECB(const bytes_t& message);
