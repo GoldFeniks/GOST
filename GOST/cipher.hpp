@@ -33,6 +33,9 @@ namespace GOST {
         bytes_t EncryptCFB(const bytes_t& message, uint64_t IV);
         bytes_t DecryptCFB(const bytes_t& message, uint64_t IV);
 
+        bytes_t EncryptOFB(const bytes_t& message, uint64_t IV);
+        bytes_t DecryptOFB(const bytes_t& message, uint64_t IV);
+
     private:
 
         typedef std::array<uint32_t, 8> stage_keys_t;
