@@ -27,6 +27,9 @@ namespace GOST {
         bytes_t EncryptECB(const bytes_t& message);
         bytes_t DecryptECB(const bytes_t& message);
 
+        bytes_t EncryptCBC(const bytes_t& message, uint64_t IV);
+        bytes_t DecryptCBC(const bytes_t& message, uint64_t IV);
+
     private:
 
         typedef std::array<uint32_t, 8> stage_keys_t;
