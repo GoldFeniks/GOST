@@ -45,6 +45,29 @@ GOST::Cipher::bytes_t GOST::Cipher::DecryptCBC(const bytes_t& message, uint64_t 
     return result;
 }
 
+GOST::Cipher::bytes_t GOST::Cipher::EncryptCFB(const bytes_t & message, uint64_t IV) {
+    split_t ms = splitMessage(message);
+    bytes_t result;
+    for (auto it : ms) {
+        IV = encrypt(IV) ^ it;
+        auto bytes = toBytes(IV);
+        result.insert(result.end(), bytes.begin(), bytes.end());
+    }
+    return result;
+}
+
+GOST::Cipher::bytes_t GOST::Cipher::DecryptCFB(const bytes_t & message, uint64_t IV) {
+    split_t ms = splitMessage(message);
+    bytes_t result;
+    for (auto it : ms) {
+        IV = encrypt(IV);
+        auto bytes = toBytes(IV ^ it);
+        result.insert(result.end(), bytes.begin(), bytes.end());
+        IV = it;
+    }
+    return result;
+}
+
 std::bitset<256> GOST::Cipher::genKey(unsigned int seed = 0) {
     srand(seed);
     std::bitset<256> result(0);
