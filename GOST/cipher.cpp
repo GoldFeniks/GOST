@@ -6,7 +6,7 @@ GOST::Cipher::bytes_t GOST::Cipher::EncryptECB(const bytes_t& message) {
     split_t ms = splitMessage(message);
     bytes_t result;
     for (auto it : ms) {
-        auto bytes = toBytes(encrypt(it));
+        auto bytes = toBytes(Encrypt(this, it));
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
     return result;
@@ -16,7 +16,7 @@ GOST::Cipher::bytes_t GOST::Cipher::DecryptECB(const bytes_t& message) {
     split_t ms = splitMessage(message);
     bytes_t result;
     for (auto it : ms) {
-        auto bytes = toBytes(decrypt(it));
+        auto bytes = toBytes(Decrypt(this, it));
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
     return result;
@@ -26,7 +26,7 @@ GOST::Cipher::bytes_t GOST::Cipher::EncryptCBC(const bytes_t& message, uint64_t 
     split_t ms = splitMessage(message);
     bytes_t result;
     for (auto it : ms) {
-        IV = encrypt(it ^ IV);
+        IV = Encrypt(this, it ^ IV);
         auto bytes = toBytes(IV);
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
@@ -37,7 +37,7 @@ GOST::Cipher::bytes_t GOST::Cipher::DecryptCBC(const bytes_t& message, uint64_t 
     split_t ms = splitMessage(message);
     bytes_t result;
     for (auto it : ms) {
-        uint64_t t = decrypt(it);
+        uint64_t t = Decrypt(this, it);
         auto bytes = toBytes(t ^ IV);
         result.insert(result.end(), bytes.begin(), bytes.end());
         IV = it;
@@ -49,7 +49,7 @@ GOST::Cipher::bytes_t GOST::Cipher::EncryptCFB(const bytes_t& message, uint64_t 
     split_t ms = splitMessage(message);
     bytes_t result;
     for (auto it : ms) {
-        IV = encrypt(IV) ^ it;
+        IV = Encrypt(this, IV) ^ it;
         auto bytes = toBytes(IV);
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
@@ -60,7 +60,7 @@ GOST::Cipher::bytes_t GOST::Cipher::DecryptCFB(const bytes_t& message, uint64_t 
     split_t ms = splitMessage(message);
     bytes_t result;
     for (auto it : ms) {
-        IV = encrypt(IV);
+        IV = Encrypt(this, IV);
         auto bytes = toBytes(IV ^ it);
         result.insert(result.end(), bytes.begin(), bytes.end());
         IV = it;
@@ -72,7 +72,7 @@ GOST::Cipher::bytes_t GOST::Cipher::EncryptOFB(const bytes_t& message, uint64_t 
     split_t ms = splitMessage(message);
     bytes_t result;
     for (auto it : ms) {
-        IV = encrypt(IV);
+        IV = Encrypt(this, IV);
         auto bytes = toBytes(IV ^ it);
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
@@ -127,28 +127,6 @@ void GOST::Cipher::genStageKeys() {
         stage_keys[i - 1] = (k & key_t(0xffffffff)).to_ulong();
         k >>= 32;
     }
-}
-
-uint64_t GOST::Cipher::encrypt(uint64_t m) {
-    uint32_t b = m >> 32, a = m & 0xffffffff;
-    for (int i = 0; i < 31; ++i) {
-        uint32_t t = b ^ f(a, stage_keys[i < 24 ? i % 8 : 7 - (i % 8)]);
-        b = a;
-        a = t;
-    }
-    b = b ^ f(a, stage_keys[0]);
-    return (static_cast<uint64_t>(b)) << 32 | a;
-}
-
-uint64_t GOST::Cipher::decrypt(uint64_t m) {
-    uint32_t b = m >> 32, a = m & 0xffffffff;
-    for (int i = 0; i < 31; ++i) {
-        uint32_t t = b ^ f(a, stage_keys[i < 8 ? i % 8 : 7 - (i % 8)]);
-        b = a;
-        a = t;
-    }
-    b = b ^ f(a, stage_keys[0]);
-    return (static_cast<uint64_t>(b)) << 32 | a;
 }
 
 

@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <string>
+#include <functional>
 
 namespace GOST {
 
@@ -36,6 +37,9 @@ namespace GOST {
         bytes_t EncryptOFB(const bytes_t& message, uint64_t IV);
         bytes_t DecryptOFB(const bytes_t& message, uint64_t IV);
 
+        std::_Mem_fn<uint64_t(Cipher::*)(uint64_t)> Encrypt = std::mem_fn(&Cipher::encrypt<24>);
+        std::_Mem_fn<uint64_t(Cipher::*)(uint64_t)> Decrypt = std::mem_fn(&Cipher::encrypt<8>);
+        
     private:
 
         typedef std::array<uint32_t, 8> stage_keys_t;
@@ -47,8 +51,6 @@ namespace GOST {
 
         uint32_t f(uint32_t a, uint32_t key);
         void genStageKeys();
-        uint64_t encrypt(uint64_t m);
-        uint64_t decrypt(uint64_t m);
 
         key_t key;
         stage_keys_t stage_keys;
@@ -73,6 +75,18 @@ namespace GOST {
             }
             return t;
         }
+
+        template<int I>
+        uint64_t encrypt(uint64_t m) {
+            uint32_t b = m >> 32, a = m & 0xffffffff;
+            for (int i = 0; i < 32; ++i) {
+                uint32_t t = b ^ f(a, stage_keys[i < I ? i % 8 : 7 - (i % 8)]);
+                b = a;
+                a = t;
+            }
+            return (static_cast<uint64_t>(a)) << 32 | b;
+        }
+
 
     };// class Cipher
 
