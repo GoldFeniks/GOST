@@ -2,129 +2,129 @@
 #include <random>
 #include <cmath>
 
-GOST::Cipher::bytes_t GOST::Cipher::EncryptECB(const bytes_t& message) {
-    split_t ms = splitMessage(message);
+gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_ecb(const bytes_t& message) {
+    auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        auto bytes = toBytes(Encrypt(this, it));
+        auto bytes = to_bytes(Encrypt(this, it));
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
     return result;
 }
 
-GOST::Cipher::bytes_t GOST::Cipher::DecryptECB(const bytes_t& message) {
-    split_t ms = splitMessage(message);
+gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_ecb(const bytes_t& message) {
+    auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        auto bytes = toBytes(Decrypt(this, it));
+        auto bytes = to_bytes(Decrypt(this, it));
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
     return result;
 }
 
-GOST::Cipher::bytes_t GOST::Cipher::EncryptCBC(const bytes_t& message, uint64_t IV) {
-    split_t ms = splitMessage(message);
+gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_cbc(const bytes_t& message, uint64_t iv) {
+    auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        IV = Encrypt(this, it ^ IV);
-        auto bytes = toBytes(IV);
+        iv = Encrypt(this, it ^ iv);
+        auto bytes = to_bytes(iv);
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
     return result;
 }
 
-GOST::Cipher::bytes_t GOST::Cipher::DecryptCBC(const bytes_t& message, uint64_t IV) {
-    split_t ms = splitMessage(message);
+gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_cbc(const bytes_t& message, uint64_t iv) {
+    auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        uint64_t t = Decrypt(this, it);
-        auto bytes = toBytes(t ^ IV);
+        const auto t = Decrypt(this, it);
+        auto bytes = to_bytes(t ^ iv);
         result.insert(result.end(), bytes.begin(), bytes.end());
-        IV = it;
+        iv = it;
     }
     return result;
 }
 
-GOST::Cipher::bytes_t GOST::Cipher::EncryptCFB(const bytes_t& message, uint64_t IV) {
-    split_t ms = splitMessage(message);
+gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_cfb(const bytes_t& message, uint64_t iv) {
+    auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        IV = Encrypt(this, IV) ^ it;
-        auto bytes = toBytes(IV);
-        result.insert(result.end(), bytes.begin(), bytes.end());
-    }
-    return result;
-}
-
-GOST::Cipher::bytes_t GOST::Cipher::DecryptCFB(const bytes_t& message, uint64_t IV) {
-    split_t ms = splitMessage(message);
-    bytes_t result;
-    for (auto it : ms) {
-        IV = Encrypt(this, IV);
-        auto bytes = toBytes(IV ^ it);
-        result.insert(result.end(), bytes.begin(), bytes.end());
-        IV = it;
-    }
-    return result;
-}
-
-GOST::Cipher::bytes_t GOST::Cipher::EncryptOFB(const bytes_t& message, uint64_t IV) {
-    split_t ms = splitMessage(message);
-    bytes_t result;
-    for (auto it : ms) {
-        IV = Encrypt(this, IV);
-        auto bytes = toBytes(IV ^ it);
+        iv = Encrypt(this, iv) ^ it;
+        auto bytes = to_bytes(iv);
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
     return result;
 }
 
-GOST::Cipher::bytes_t GOST::Cipher::DecryptOFB(const bytes_t& message, uint64_t IV) {
-    return EncryptOFB(message, IV);
+gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_cfb(const bytes_t& message, uint64_t iv) {
+    auto ms = split_message(message);
+    bytes_t result;
+    for (auto it : ms) {
+        iv = Encrypt(this, iv);
+        auto bytes = to_bytes(iv ^ it);
+        result.insert(result.end(), bytes.begin(), bytes.end());
+        iv = it;
+    }
+    return result;
 }
 
-std::bitset<256> GOST::Cipher::genKey(unsigned int seed = 0) {
+gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_ofb(const bytes_t& message, uint64_t iv) {
+    auto ms = split_message(message);
+    bytes_t result;
+    for (auto it : ms) {
+        iv = Encrypt(this, iv);
+        auto bytes = to_bytes(iv ^ it);
+        result.insert(result.end(), bytes.begin(), bytes.end());
+    }
+    return result;
+}
+
+gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_ofb(const bytes_t& message, const uint64_t iv) {
+    return encrypt_ofb(message, iv);
+}
+
+std::bitset<256> gost_magma::cipher::gen_key(const unsigned int seed = 0) {
     srand(seed);
     std::bitset<256> result(0);
-    for (int i = 0; i < 256; ++i)
+    for (auto i = 0; i < 256; ++i)
         result.set(i, rand() % 2);
     return result;
 }
 
-GOST::Cipher::blocks_t GOST::Cipher::genBlocks(unsigned int seed) {
+gost_magma::cipher::blocks_t gost_magma::cipher::gen_blocks(const unsigned int seed) {
     blocks_t result;
     block_t nums = { { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } };
-    for (int i = 0; i < 8; ++i) {
-        std::shuffle(nums.begin(), nums.end(), std::default_random_engine(seed));
+    for (auto i = 0; i < 8; ++i) {
+        shuffle(nums.begin(), nums.end(), std::default_random_engine(seed));
         result[i] = nums;
     }
     return result;
 }
 
-GOST::Cipher::split_t GOST::Cipher::splitMessage(const bytes_t& bytes) {
-    bytes_t expbytes = bytes;
-    for (int i = 0; i < 8 * std::ceil(bytes.size() / 8.0) - bytes.size(); ++i)
+gost_magma::cipher::split_t gost_magma::cipher::split_message(const bytes_t& bytes) {
+    auto expbytes = bytes;
+    for (auto i = 0; i < 8 * ceil(bytes.size() / 8.0) - bytes.size(); ++i)
         expbytes.push_back(0);
     split_t result;
     for (auto it = expbytes.begin(); it != expbytes.end(); it += 8)
-        result.push_back(fromBytes<uint64_t>(&*it));
+        result.push_back(from_bytes<uint64_t>(&*it));
     return result;
 }
 
-uint32_t GOST::Cipher::f(uint32_t a, uint32_t key) {
+uint32_t gost_magma::cipher::f(uint32_t a, const uint32_t key) {
     a += key;
     uint32_t r = 0;
-    for (int i = 0; i < 8; ++i) {
-        r |= blocks[i][a & 0xf] << i * 4;
+    for (auto i = 0; i < 8; ++i) {
+        r |= blocks_[i][a & 0xf] << i * 4;
         a >>= 4;
     }
-    return (r << 11) | (r >> 21);
+    return r << 11 | r >> 21;
 }
 
-void GOST::Cipher::genStageKeys() {
-    auto k = key;
-    for (int i = 1; i <= 8; ++i) {
-        stage_keys[i - 1] = (k & key_t(0xffffffff)).to_ulong();
+void gost_magma::cipher::gen_stage_keys() {
+    auto k = key_;
+    for (auto i = 1; i <= 8; ++i) {
+        stage_keys_[i - 1] = (k & key_t(0xffffffff)).to_ulong();
         k >>= 32;
     }
 }

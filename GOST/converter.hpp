@@ -1,10 +1,19 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <functional>
+#include "cipher.hpp"
 
-namespace GOST {
+namespace gost_magma {
 
-    std::vector<unsigned char> toBytes(const std::string& string);
-    std::string toString(const std::vector<unsigned char>& bytes);
+    template<typename F, typename T>
+    T convert(const F& from) {
+        return T(from.begin(), from.end());
+    }
 
-}// namespace GOST
+    template<typename T>
+    using to_bytes = convert<T, cipher::bytes_t>;
+
+    std::function<std::string(cipher::bytes_t)> to_string = convert<cipher::bytes_t, std::string>;
+
+}// namespace gost_magma

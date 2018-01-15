@@ -3,12 +3,11 @@
 #include <bitset>
 #include <array>
 #include <vector>
-#include <string>
 #include <functional>
 
-namespace GOST {
+namespace gost_magma {
 
-    class Cipher {
+    class cipher {
 
     public:
 
@@ -19,47 +18,47 @@ namespace GOST {
         typedef std::array<block_t, 8> blocks_t;
         typedef std::bitset<256> key_t;
 
-        Cipher(key_t key, blocks_t blocks) : key(key), blocks(blocks) { genStageKeys(); };
-        Cipher(key_t key) : key(key), blocks(genBlocks(time(NULL))) { genStageKeys(); };
-        Cipher(blocks_t blocks) : key(genKey(time(NULL))), blocks(blocks) { genStageKeys(); };
-        Cipher(seed_t key_seed, seed_t blocks_seed) : key(genKey(key_seed)), blocks(genBlocks(blocks_seed)) { genStageKeys(); };
-        Cipher() : key(genKey(time(NULL))), blocks(genBlocks(time(NULL))) { genStageKeys(); };
+        cipher(const key_t key, const blocks_t blocks) : key_(key), blocks_(blocks) { gen_stage_keys(); }
+        explicit cipher(const key_t key) : key_(key), blocks_(gen_blocks(time(nullptr))) { gen_stage_keys(); }
+        explicit cipher(const blocks_t blocks) : key_(gen_key(time(nullptr))), blocks_(blocks) { gen_stage_keys(); }
+        cipher(const seed_t key_seed, const seed_t blocks_seed) : key_(gen_key(key_seed)), blocks_(gen_blocks(blocks_seed)) { gen_stage_keys(); }
+        cipher() : key_(gen_key(time(nullptr))), blocks_(gen_blocks(time(nullptr))) { gen_stage_keys(); };
 
-        bytes_t EncryptECB(const bytes_t& message);
-        bytes_t DecryptECB(const bytes_t& message);
+        bytes_t encrypt_ecb(const bytes_t& message);
+        bytes_t decrypt_ecb(const bytes_t& message);
 
-        bytes_t EncryptCBC(const bytes_t& message, uint64_t IV);
-        bytes_t DecryptCBC(const bytes_t& message, uint64_t IV);
+        bytes_t encrypt_cbc(const bytes_t& message, uint64_t iv);
+        bytes_t decrypt_cbc(const bytes_t& message, uint64_t iv);
 
-        bytes_t EncryptCFB(const bytes_t& message, uint64_t IV);
-        bytes_t DecryptCFB(const bytes_t& message, uint64_t IV);
+        bytes_t encrypt_cfb(const bytes_t& message, uint64_t iv);
+        bytes_t decrypt_cfb(const bytes_t& message, uint64_t iv);
 
-        bytes_t EncryptOFB(const bytes_t& message, uint64_t IV);
-        bytes_t DecryptOFB(const bytes_t& message, uint64_t IV);
+        bytes_t encrypt_ofb(const bytes_t& message, uint64_t iv);
+        bytes_t decrypt_ofb(const bytes_t& message, uint64_t iv);
 
-        std::_Mem_fn<uint64_t(Cipher::*)(uint64_t)> Encrypt = std::mem_fn(&Cipher::encrypt<24>);
-        std::_Mem_fn<uint64_t(Cipher::*)(uint64_t)> Decrypt = std::mem_fn(&Cipher::encrypt<8>);
+        std::_Mem_fn<uint64_t(cipher::*)(uint64_t)> Encrypt = std::mem_fn(&cipher::encrypt<24>);
+        std::_Mem_fn<uint64_t(cipher::*)(uint64_t)> Decrypt = std::mem_fn(&cipher::encrypt<8>);
         
     private:
 
         typedef std::array<uint32_t, 8> stage_keys_t;
         typedef std::vector<uint64_t> split_t;
 
-        static key_t genKey(unsigned int seed);
-        static blocks_t genBlocks(unsigned int seed);
-        static split_t splitMessage(const bytes_t& bytes);
+        static key_t gen_key(unsigned int seed);
+        static blocks_t gen_blocks(unsigned int seed);
+        static split_t split_message(const bytes_t& bytes);
 
         uint32_t f(uint32_t a, uint32_t key);
-        void genStageKeys();
+        void gen_stage_keys();
 
-        key_t key;
-        stage_keys_t stage_keys;
-        blocks_t blocks;
+        key_t key_;
+        stage_keys_t stage_keys_;
+        blocks_t blocks_;
 
         template<typename T>
-        static std::array<byte_t, sizeof(T)> toBytes(T value) {
+        static std::array<byte_t, sizeof(T)> to_bytes(T value) {
             std::array<byte_t, sizeof(T)> result;
-            for (int i = 0; i < sizeof(T); ++i) {
+            for (auto i = 0; i < sizeof(T); ++i) {
                 result[i] = value & 0xff;
                 value >>= 8;
             }
@@ -67,9 +66,9 @@ namespace GOST {
         }
 
         template<typename T>
-        static T fromBytes(const byte_t* bytes) {
+        static T from_bytes(const byte_t* bytes) {
             T t = 0;
-            for (int i = 0; i < sizeof(T); ++i) {
+            for (auto i = 0; i < sizeof(T); ++i) {
                 t |= static_cast<T>(*bytes) << i * 8;
                 ++bytes;
             }
@@ -77,17 +76,17 @@ namespace GOST {
         }
 
         template<int I>
-        uint64_t encrypt(uint64_t m) {
+        uint64_t encrypt(const uint64_t m) {
             uint32_t b = m >> 32, a = m & 0xffffffff;
-            for (int i = 0; i < 32; ++i) {
-                uint32_t t = b ^ f(a, stage_keys[i < I ? i % 8 : 7 - (i % 8)]);
+            for (auto i = 0; i < 32; ++i) {
+                auto t = b ^ f(a, stage_keys_[i < I ? i % 8 : 7 - i % 8]);
                 b = a;
                 a = t;
             }
-            return (static_cast<uint64_t>(a)) << 32 | b;
+            return static_cast<uint64_t>(a) << 32 | b;
         }
 
 
     };// class Cipher
 
-}// GOST
+}// namespace gost_magma
