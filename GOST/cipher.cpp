@@ -6,7 +6,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_ecb(const bytes_t& messa
     auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        auto bytes = to_bytes(Encrypt(this, it));
+        auto bytes = to_bytes(encrypt_(this, it));
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
     return result;
@@ -16,7 +16,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_ecb(const bytes_t& messa
     auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        auto bytes = to_bytes(Decrypt(this, it));
+        auto bytes = to_bytes(decrypt_(this, it));
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
     return result;
@@ -26,7 +26,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_cbc(const bytes_t& messa
     auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        iv = Encrypt(this, it ^ iv);
+        iv = encrypt_(this, it ^ iv);
         auto bytes = to_bytes(iv);
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
@@ -37,7 +37,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_cbc(const bytes_t& messa
     auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        const auto t = Decrypt(this, it);
+        const auto t = decrypt_(this, it);
         auto bytes = to_bytes(t ^ iv);
         result.insert(result.end(), bytes.begin(), bytes.end());
         iv = it;
@@ -49,7 +49,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_cfb(const bytes_t& messa
     auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        iv = Encrypt(this, iv) ^ it;
+        iv = encrypt_(this, iv) ^ it;
         auto bytes = to_bytes(iv);
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
@@ -60,7 +60,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_cfb(const bytes_t& messa
     auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        iv = Encrypt(this, iv);
+        iv = encrypt_(this, iv);
         auto bytes = to_bytes(iv ^ it);
         result.insert(result.end(), bytes.begin(), bytes.end());
         iv = it;
@@ -72,7 +72,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_ofb(const bytes_t& messa
     auto ms = split_message(message);
     bytes_t result;
     for (auto it : ms) {
-        iv = Encrypt(this, iv);
+        iv = encrypt_(this, iv);
         auto bytes = to_bytes(iv ^ it);
         result.insert(result.end(), bytes.begin(), bytes.end());
     }

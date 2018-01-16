@@ -20,43 +20,159 @@ namespace gost_magma {
         typedef uint64_t initialization_vector_t;
         typedef uint64_t message_part_t;
 
+        /**
+         * \brief initialize cipher with specified key and s-blocks
+         * \param key 256 bit key
+         * \param blocks s-blocks
+         */
         cipher(const key_t key, const blocks_t blocks) : key_(key), blocks_(blocks) { gen_stage_keys(); }
+
+        /**
+         * \brief initialize cipher with specified key and random s-blocks
+         * \param key 256 bit key
+         */
         explicit cipher(const key_t key) : key_(key), blocks_(gen_blocks(time(nullptr))) { gen_stage_keys(); }
+
+        /**
+         * \brief initialize cipher with specified s-blocks and random key
+         * \param blocks 
+         */
         explicit cipher(const blocks_t blocks) : key_(gen_key(time(nullptr))), blocks_(blocks) { gen_stage_keys(); }
+
+        /**
+         * \brief initialize cipher with random key and s-blocks using specified seeds
+         * \param key_seed seed to be used for key generation
+         * \param blocks_seed seed to be used for s-blocks generation
+         */
         cipher(const seed_t key_seed, const seed_t blocks_seed) : key_(gen_key(key_seed)), blocks_(gen_blocks(blocks_seed)) { gen_stage_keys(); }
+
+        /**
+         * \brief initialize cipher with random key and s-blocks
+         */
         cipher() : key_(gen_key(time(nullptr))), blocks_(gen_blocks(time(nullptr))) { gen_stage_keys(); };
 
+        /**
+         * \brief encrypt message using electronic codebook mode of operation
+         * \param message bytes to be encrypted
+         * \return encrypted bytes
+         */
         bytes_t encrypt_ecb(const bytes_t& message);
+
+        /**
+        * \brief decrypt message using electronic codebook mode of operation
+        * \param message bytes to be decrypted
+        * \return decrypted bytes
+        */
         bytes_t decrypt_ecb(const bytes_t& message);
 
+        /**
+         * \brief encrypt message using cipher block chain mode of operation
+         * \param message bytes to be encrypted
+         * \param iv initialization vector to be used in encryption
+         * \return encrypted bytes
+         */
         bytes_t encrypt_cbc(const bytes_t& message, initialization_vector_t iv);
+
+        /**
+        * \brief decrypt message using cipher block chain mode of operation
+        * \param message bytes to be decrypted
+        * \param iv initialization vector to be used in decryption
+        * \return decrypted bytes
+        */
         bytes_t decrypt_cbc(const bytes_t& message, initialization_vector_t iv);
 
+        /**
+        * \brief encrypt message using cipher feedback mode of operation
+        * \param message bytes to be encrypted
+        * \param iv initialization vector to be used in encryption
+        * \return encrypted bytes
+        */
         bytes_t encrypt_cfb(const bytes_t& message, initialization_vector_t iv);
+
+        /**
+        * \brief decrypt message using cipher feedback mode of operation
+        * \param message bytes to be dencrypted
+        * \param iv initialization vector to be used in decryption
+        * \return decrypted bytes
+        */
         bytes_t decrypt_cfb(const bytes_t& message, initialization_vector_t iv);
 
+        /**
+        * \brief encrypt message using output feedback mode of operation
+        * \param message bytes to be encrypted
+        * \param iv initialization vector to be used in encryption
+        * \return encrypted bytes
+        */
         bytes_t encrypt_ofb(const bytes_t& message, initialization_vector_t iv);
-        bytes_t decrypt_ofb(const bytes_t& message, initialization_vector_t iv);
 
-        std::_Mem_fn<message_part_t(cipher::*)(message_part_t)> Encrypt = std::mem_fn(&cipher::encrypt<24>);
-        std::_Mem_fn<message_part_t(cipher::*)(message_part_t)> Decrypt = std::mem_fn(&cipher::encrypt<8>);
+        /**
+        * \brief decrypt message using output feedback mode of operation
+        * \param message bytes to be decrypted
+        * \param iv initialization vector to be used in decryption
+        * \return decrypted bytes
+        */
+        bytes_t decrypt_ofb(const bytes_t& message, initialization_vector_t iv);
         
     private:
 
         typedef std::array<uint32_t, 8> stage_keys_t;
-        typedef std::vector<uint64_t> split_t;
+        typedef std::vector<message_part_t> split_t;
 
-        static key_t gen_key(unsigned int seed);
-        static blocks_t gen_blocks(unsigned int seed);
-        static split_t split_message(const bytes_t& bytes);
-
-        uint32_t f(uint32_t a, uint32_t key);
-        void gen_stage_keys();
-
+        /**
+         * \brief cipher key
+         */
         key_t key_;
+
+        /**
+         * \brief cipher stage keys
+         */
         stage_keys_t stage_keys_;
+
+        /**
+         * \brief cipher s-blocks
+         */
         blocks_t blocks_;
 
+        /**
+         * \brief generate random key
+         * \param seed seed to be used for generation
+         * \return generated key
+         */
+        static key_t gen_key(unsigned int seed);
+
+        /**
+         * \brief generate random s-blocks
+         * \param seed seed to be used for generation
+         * \return generated s-blocks
+         */
+        static blocks_t gen_blocks(unsigned int seed);
+
+        /**
+         * \brief split message in 64bit numbers
+         * \param bytes message to be splitted
+         * \return splitted message
+         */
+        static split_t split_message(const bytes_t& bytes);
+
+        /**
+         * \brief generate stage keys
+         */
+        void gen_stage_keys();
+
+        /**
+         * \brief function f used in Feistel network
+         * \param a lower bits of message part
+         * \param key round key
+         * \return function result
+         */
+        uint32_t f(uint32_t a, uint32_t key);
+
+        /**
+         * \brief splits value in bytes
+         * \tparam T type of value to be splitted
+         * \param value value to be splitted
+         * \return splitted value
+         */
         template<typename T>
         static std::array<byte_t, sizeof(T)> to_bytes(T value) {
             std::array<byte_t, sizeof(T)> result;
@@ -67,6 +183,12 @@ namespace gost_magma {
             return result;
         }
 
+        /**
+         * \brief converts bytes into value of type T
+         * \tparam T type of result value
+         * \param bytes bytes to be converted
+         * \return converted bytes
+         */
         template<typename T>
         static T from_bytes(const byte_t* bytes) {
             T t = 0;
@@ -77,6 +199,12 @@ namespace gost_magma {
             return t;
         }
 
+        /**
+         * \brief perform cipher encryption passing first I stage keys in straight order
+         * \tparam I number of stage keys to be passed in straight order
+         * \param m value to be encrypted
+         * \return encrypted value
+         */
         template<size_t I>
         message_part_t encrypt(const message_part_t m) {
             uint32_t b = m >> 32, a = m & 0xffffffff;
@@ -87,6 +215,18 @@ namespace gost_magma {
             }
             return static_cast<message_part_t>(a) << 32 | b;
         }
+
+        /**
+         * \brief perform encryption
+         * \param 1 value to be encrypted
+         */
+        std::_Mem_fn<message_part_t(cipher::*)(message_part_t)> encrypt_ = std::mem_fn(&cipher::encrypt<24>);
+
+        /**
+        * \brief perform decryption
+        * \param 1 value to be decrypted
+        */
+        std::_Mem_fn<message_part_t(cipher::*)(message_part_t)> decrypt_ = std::mem_fn(&cipher::encrypt<8>);
 
 
     };// class Cipher
