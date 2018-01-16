@@ -13,13 +13,13 @@ gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_ecb(const bytes_t& messa
 }
 
 gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_ecb(const bytes_t& message) {
-    auto ms = split_message(message);
+    auto ms = split_message(message, false);
     bytes_t result;
     for (auto it : ms) {
         auto bytes = to_bytes(decrypt_(this, it));
         result.insert(result.end(), bytes.begin(), bytes.end());
     }
-    return result;
+    return drop_bytes(result);
 }
 
 gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_cbc(const bytes_t& message, initialization_vector_t iv) {
@@ -34,7 +34,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_cbc(const bytes_t& messa
 }
 
 gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_cbc(const bytes_t& message, initialization_vector_t iv) {
-    auto ms = split_message(message);
+    auto ms = split_message(message, false);
     bytes_t result;
     for (auto it : ms) {
         const auto t = decrypt_(this, it);
@@ -42,7 +42,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_cbc(const bytes_t& messa
         result.insert(result.end(), bytes.begin(), bytes.end());
         iv = it;
     }
-    return result;
+    return drop_bytes(result);
 }
 
 gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_cfb(const bytes_t& message, initialization_vector_t iv) {
@@ -57,7 +57,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_cfb(const bytes_t& messa
 }
 
 gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_cfb(const bytes_t& message, initialization_vector_t iv) {
-    auto ms = split_message(message);
+    auto ms = split_message(message, false);
     bytes_t result;
     for (auto it : ms) {
         iv = encrypt_(this, iv);
@@ -65,7 +65,7 @@ gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_cfb(const bytes_t& messa
         result.insert(result.end(), bytes.begin(), bytes.end());
         iv = it;
     }
-    return result;
+    return drop_bytes(result);
 }
 
 gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_ofb(const bytes_t& message, initialization_vector_t iv) {
@@ -80,7 +80,8 @@ gost_magma::cipher::bytes_t gost_magma::cipher::encrypt_ofb(const bytes_t& messa
 }
 
 gost_magma::cipher::bytes_t gost_magma::cipher::decrypt_ofb(const bytes_t& message, const initialization_vector_t iv) {
-    return encrypt_ofb(message, iv);
+    auto result = encrypt_ofb(message, iv);
+    return drop_bytes(result);
 }
 
 std::bitset<256> gost_magma::cipher::gen_key(const unsigned int seed = 0) {
@@ -101,14 +102,22 @@ gost_magma::cipher::blocks_t gost_magma::cipher::gen_blocks(const unsigned int s
     return result;
 }
 
-gost_magma::cipher::split_t gost_magma::cipher::split_message(const bytes_t& bytes) {
+gost_magma::cipher::split_t gost_magma::cipher::split_message(const bytes_t& bytes, const bool do_padding) {
     auto expbytes = bytes;
-    for (auto i = 0; i < 8 * ceil(bytes.size() / 8.0) - bytes.size(); ++i)
-        expbytes.push_back(0);
+    if (do_padding) {
+        const byte_t rem = bytes.size() % 8 ? 8 * ceil(bytes.size() / 8.0) - bytes.size() : 8;
+        for (auto i = 0; i < rem; ++i)
+            expbytes.push_back(rem);
+    }
     split_t result;
     for (auto it = expbytes.begin(); it != expbytes.end(); it += 8)
-        result.push_back(from_bytes<uint64_t>(&*it));
+        result.push_back(from_bytes<message_part_t>(&*it));
     return result;
+}
+
+gost_magma::cipher::bytes_t& gost_magma::cipher::drop_bytes(bytes_t& bytes) {
+    bytes.resize(bytes.size() - bytes.back());
+    return bytes;
 }
 
 uint32_t gost_magma::cipher::f(uint32_t a, const uint32_t key) {

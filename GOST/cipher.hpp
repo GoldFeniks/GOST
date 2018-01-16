@@ -112,6 +112,20 @@ namespace gost_magma {
         * \return decrypted bytes
         */
         bytes_t decrypt_ofb(const bytes_t& message, initialization_vector_t iv);
+
+        /**
+        * \brief generate random key
+        * \param seed seed to be used for generation
+        * \return generated key
+        */
+        static key_t gen_key(unsigned int seed);
+
+        /**
+        * \brief generate random s-blocks
+        * \param seed seed to be used for generation
+        * \return generated s-blocks
+        */
+        static blocks_t gen_blocks(unsigned int seed);
         
     private:
 
@@ -134,25 +148,19 @@ namespace gost_magma {
         blocks_t blocks_;
 
         /**
-         * \brief generate random key
-         * \param seed seed to be used for generation
-         * \return generated key
-         */
-        static key_t gen_key(unsigned int seed);
-
-        /**
-         * \brief generate random s-blocks
-         * \param seed seed to be used for generation
-         * \return generated s-blocks
-         */
-        static blocks_t gen_blocks(unsigned int seed);
-
-        /**
-         * \brief split message in 64bit numbers
+         * \brief split message in 64bit numbers and perfrom padding if necessary 
          * \param bytes message to be splitted
+         * \param do_padding pass true to perform padding
          * \return splitted message
          */
-        static split_t split_message(const bytes_t& bytes);
+        static split_t split_message(const bytes_t& bytes, const bool do_padding = true);
+
+        /**
+         * \brief drop extra bytes added after padding (in place)
+         * \param bytes bytes for processing
+         * \return passed bytes
+         */
+        static bytes_t& drop_bytes(bytes_t& bytes);
 
         /**
          * \brief generate stage keys

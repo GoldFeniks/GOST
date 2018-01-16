@@ -44,8 +44,8 @@ namespace gost_magma {
     /**
      * \brief read b bytes from input stream
      * \tparam N type of b
-     * \param a stream to read bytes from
-     * \param b number of bytes to be read
+     * \param 1 stream to read bytes from
+     * \param 2 number of bytes to be read
      */
     template<typename N>
     std::function<cipher::bytes_t(std::istream&)> read_bytes_stream_n = read_bytes_n<std::istream, N>;
