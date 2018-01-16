@@ -12,7 +12,7 @@ namespace gost_magma {
     }
 
     template<typename T>
-    using to_bytes = convert<T, cipher::bytes_t>;
+    std::function<cipher::bytes_t(T)> to_bytes = convert<T, cipher::bytes_t>;
 
     std::function<std::string(cipher::bytes_t)> to_string = convert<cipher::bytes_t, std::string>;
 

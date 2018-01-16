@@ -24,6 +24,6 @@ namespace gost_magma {
     }
 
     template<typename N>
-    using read_bytes_stream_n = read_bytes_n<std::istream, N>;
+    std::function<cipher::bytes_t(std::istream&)> read_bytes_stream_n = read_bytes_n<std::istream, N>;
     
 }// namespace gost_magma
