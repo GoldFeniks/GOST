@@ -114,12 +114,11 @@
   <ItemGroup>
     <ClInclude Include="cipher.hpp" />
     <ClInclude Include="converter.hpp" />
-    <ClInclude Include="gost_magma.hpp" />
     <ClInclude Include="reader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cipher.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="example.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -137,5 +137,3 @@ void gost_magma::cipher::gen_stage_keys() {
         k >>= 32;
     }
 }
-
-
